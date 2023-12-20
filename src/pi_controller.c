@@ -3,11 +3,15 @@
 #endif
  
 #include <avr/io.h>
-#include <util/delay.h>                
+#include <util/delay.h>
+#include <avr/pgmspace.h>
 #include <simplePID.h>
+#include "lcd.h"
 
 static PidController pi_controller;
-static PidNewCoefficients pi_coeff;
+static PidNewCoefficients pid_coeff;
+
+const char hello[] PROGMEM = "Hello world!";
 
 iq8_t StateEstimator(void) {
     //TODO: fill here your sensors readings:
@@ -20,13 +24,20 @@ void Command(iq8_t command) {
 }
 
 int main(void) {
+	// LCD 1602 initialize
+	lcd_init();
+	lcd_clear();
+	lcd_return_home();
+	
+	lcd_puts(hello);
+	
     //Make a PI controller:
-    pi_coeff.new_ki = FLOAT_TO_Q8(0.1f);
-    pi_coeff.new_kp = FLOAT_TO_Q8(1.0f);
+    pid_coeff.new_ki = FLOAT_TO_Q8(0.1f);
+    pid_coeff.new_kp = FLOAT_TO_Q8(1.0f);
 
     //FIRST: initialize your PID controller:
     PidControllerInit(&pi_controller,
-                      &pi_coeff);
+                      &pid_coeff);
 
     while(1) {
         _delay_ms(2); //Simulate a plant running at 500Hz:

@@ -5,17 +5,19 @@ TARGET = pi_controller
 C_SOURCES = \
 src/pi_controller.c \
 src/simplePID.c \
-src/simplePID_a.s
+src/simplePID_a.s \
+src/lcd.c
 
 
 # название контроллера и частота для компилятора
 MCU = atmega16
-F_CPU = 8000000
+F_CPU = 16000000
 
 # параметры для AVRDUDE
 DUDE_MCU = m16
 PORT = COM3
 PORTSPEED = 115200
+PROGRAMMER = wiring
 
 # DEFINы
 DEFINES = \
@@ -116,19 +118,19 @@ clean:
 	rmdir /S /Q $(BUILD_DIR)
 
 prog: $(TARGET).hex
-	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c wiring -P $(PORT) -b $(PORTSPEED) -U flash:w:$(BUILD_DIR)/$(TARGET).hex
+	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c $(PROGRAMMER) -P $(PORT) -b $(PORTSPEED) -U flash:w:$(BUILD_DIR)/$(TARGET).hex:i
 
 isp: $(TARGET).hex
-	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c usbasp -B8 -U flash:w:$(BUILD_DIR)/$(TARGET).hex
+	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c usbasp -B8 -U flash:w:$(BUILD_DIR)/$(TARGET).hex:i
 
 write_bootloader:
-	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c usbasp -B8 -U flash:w:optiboot_flash_atmega328p_UART0_19200_8000000L_B5.hex
+	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c usbasp -B8 -U flash:w:optiboot_flash_atmega328p_UART0_19200_8000000L_B5.hex:i
 
 read_eeprom:
-	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c arduino -P $(PORT) -b $(PORTSPEED) -U eeprom:r:eeprom.hex:i
+	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c $(PROGRAMMER) -P $(PORT) -b $(PORTSPEED) -U eeprom:r:eeprom.hex:i
 
 write_eeprom: $(TARGET).eep
-	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c arduino -P $(PORT) -b $(PORTSPEED) -U eeprom:w:$(BUILD_DIR)/$(TARGET).eep
+	$(AVRCCDIR)$(AVRDUDE) -p $(DUDE_MCU) -c $(PROGRAMMER) -P $(PORT) -b $(PORTSPEED) -U eeprom:w:$(BUILD_DIR)/$(TARGET).eep:i
 
 size:
 	$(AVRCCDIR)$(SIZE) $(BUILD_DIR)/$(TARGET).elf
