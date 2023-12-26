@@ -6,7 +6,8 @@ C_SOURCES = \
 src/pi_controller.c \
 src/simplePID.c \
 src/simplePID_a.s \
-src/lcd.c
+src/lcd.c \
+src/adc.c
 
 
 # название контроллера и частота для компилятора

@@ -5,16 +5,42 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 #include <simplePID.h>
 #include "lcd.h"
+#include "adc.h"
 
 static PidController pi_controller;
 static PidNewCoefficients pid_coeff;
 
-const char hello[] PROGMEM = "Hello world!";
+const char title[] PROGMEM = "PID controller";
+
+// Прерывание таймера Т0
+ISR(TIMER0_COMP_vect)
+{
+	// сбрасываем счетчик
+	TCNT0 = 0;
+	// Возводим флаг 
+
+}
+
+void Timer0_Init(void)
+{
+	// Период срабатывания прерывания таймера 2 мс (500 Гц)
+	// 31.25 = 2 ms /(1000/(F_CPU/1024))
+	OCR1B = 31;
+	// Разрешаем прерывание таймера по совпадению
+	TIMSK |= (1 << OCIE0);
+	// Предделитель 1024
+	TCCR0 = (5 << CS00);
+}
 
 iq8_t StateEstimator(void) {
     //TODO: fill here your sensors readings:
+    char result[4];
+    lcd_set_cursor(0,1);
+    utoa(adc_read(0), result, 10);
+    lcd_puts(result);
     return FLOAT_TO_Q8(0.5f);
 }
 
@@ -24,14 +50,18 @@ void Command(iq8_t command) {
 }
 
 int main(void) {
-	// LCD 1602 initialize
+	// Инициализация ЖКИ 1602
 	lcd_init();
 	lcd_clear();
 	lcd_return_home();
 	
-	lcd_puts("hello");
-    lcd_set_cursor(0,1);
-    lcd_puts_P(hello);
+    lcd_puts_P(title);
+
+    // Инициализация АЦП
+    ADC_Init();
+    // Инициализация таймера Т0
+    // Срабатывание прерывания таймера каждые 2 мс (500 Гц)
+    Timer0_Init();
 	
     //Make a PI controller:
     pid_coeff.new_kp = FLOAT_TO_Q8(1.0f);
@@ -44,6 +74,7 @@ int main(void) {
 
     while(1) {
         _delay_ms(2); //Simulate a plant running at 500Hz:
+
         //SECOND: Read sensor and compute next command:
         iq8_t command = PidControllerUpdate(&pi_controller, FLOAT_TO_Q8(0.5), StateEstimator());
         //THIRD: update actuator:
