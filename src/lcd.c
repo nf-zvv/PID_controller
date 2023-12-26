@@ -6,6 +6,9 @@
 
 void lcd_send(uint8_t value, uint8_t mode);
 void lcd_write_nibble(uint8_t nibble);
+void lcd_port_in(void);
+void lcd_port_out(void);
+void lcd_busywait(void);
 
 static uint8_t lcd_displayparams;
 static char lcd_buffer[LCD_COL_COUNT + 1];
@@ -18,7 +21,57 @@ void lcd_write(uint8_t value) {
   lcd_send(value, 1);
 }
 
+void lcd_port_in(void) {
+// Configure pins as input
+  LCD_DATA_DDR = LCD_DATA_DDR
+    & ~(1 << LCD_D0)
+    & ~(1 << LCD_D1)
+    & ~(1 << LCD_D2)
+    & ~(1 << LCD_D3);
+
+  // Turn on pull-up resistors
+  LCD_DATA_PORT = LCD_DATA_PORT
+    | (1 << LCD_D0)
+    | (1 << LCD_D1)
+    | (1 << LCD_D2)
+    | (1 << LCD_D3);
+}
+
+void lcd_port_out(void) {
+  // Data port to output
+  LCD_DATA_DDR = LCD_DATA_DDR
+    | (1 << LCD_D0)
+    | (1 << LCD_D1)
+    | (1 << LCD_D2)
+    | (1 << LCD_D3);
+}
+
+void lcd_busywait(void) {
+  uint8_t status = (1 << LCD_D3);
+
+  lcd_port_in();
+
+  LCD_CMD_PORT &= ~(1 << LCD_RS); // command mode
+  LCD_CMD_PORT |= (1 << LCD_RW); // reading
+  
+  while (status & (1 << LCD_D3))
+  {
+    LCD_CMD_PORT |= (1 << LCD_EN);
+    _delay_us(1);
+    status = LCD_DATA_PIN;
+    LCD_CMD_PORT &= ~(1 << LCD_EN);
+    _delay_us(37);
+    LCD_CMD_PORT |= (1 << LCD_EN);
+    _delay_us(1);
+    LCD_CMD_PORT &= ~(1 << LCD_EN);
+    _delay_us(37);
+  }
+
+  lcd_port_out();
+}
+
 void lcd_send(uint8_t value, uint8_t mode) {
+  lcd_busywait();
   if (mode) {
     LCD_CMD_PORT |= (1 << LCD_RS);
   } else {
@@ -32,36 +85,31 @@ void lcd_send(uint8_t value, uint8_t mode) {
 }
 
 void lcd_write_nibble(uint8_t nibble) {
-  LCD_DATA_PORT = (LCD_DATA_PORT & 0xff & ~(0x0f << LCD_D0)) | ((nibble & 0x0f) << LCD_D0);
-
+  LCD_DATA_PORT = (LCD_DATA_PORT & ~(0x0f << LCD_D0)) | ((nibble & 0x0f) << LCD_D0);
   LCD_CMD_PORT &= ~(1 << LCD_EN);
   LCD_CMD_PORT |= (1 << LCD_EN);
+  _delay_us(1);
   LCD_CMD_PORT &= ~(1 << LCD_EN);
-  _delay_ms(0.3);	// If delay less than this value, the data is not correctly displayed  
+  _delay_us(37);	// If delay less than this value, the data is not correctly displayed  
 }
 
 void lcd_init(void) {
+  LCD_CMD_PORT = LCD_CMD_PORT
+    & ~(1 << LCD_EN)
+    & ~(1 << LCD_RS)
+    & ~(1 << LCD_RW);
+
   // Configure pins as output
   LCD_CMD_DDR = LCD_CMD_DDR
     | (1 << LCD_RS)
     | (1 << LCD_RW)
     | (1 << LCD_EN);
 	
-  LCD_DATA_DDR = LCD_DATA_DDR
-    | (1 << LCD_D0)
-    | (1 << LCD_D1)
-    | (1 << LCD_D2)
-    | (1 << LCD_D3);
+  // Data port to output
+  lcd_port_out();
 
   // Wait for LCD to become ready (docs say 15ms+)
   _delay_ms(15);
-
-  LCD_CMD_PORT = LCD_CMD_PORT
-    & ~(1 << LCD_EN)
-    & ~(1 << LCD_RS)
-    & ~(1 << LCD_RW);
-
-  _delay_ms(4.1);
 
   lcd_write_nibble(0x03); // Switch to 4 bit mode
   _delay_ms(4.1);
@@ -76,7 +124,7 @@ void lcd_init(void) {
 
   lcd_command(LCD_FUNCTIONSET | LCD_4BITMODE | LCD_2LINE | LCD_5x8DOTS);
 
-  lcd_displayparams = LCD_CURSOROFF | LCD_BLINKOFF;
+  lcd_displayparams = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
   lcd_command(LCD_DISPLAYCONTROL | lcd_displayparams);
 }
 
@@ -166,6 +214,13 @@ void lcd_puts(char *string) {
   for (char *it = string; *it; it++) {
     lcd_write(*it);
   }
+}
+
+void lcd_puts_P(const char *string) {
+for(uint8_t i=0;(uint8_t)pgm_read_byte(&string[i]);i++)
+	{
+		lcd_write((uint8_t)pgm_read_byte(&string[i]));
+	}
 }
 
 void lcd_printf(char *format, ...) {

@@ -27,3 +27,6 @@
 make all
 ```
 
+## Hardwire
+
+Используется дисплей 1602 с модифицированной библиотекой [avr-hd44780](https://github.com/aostanin/avr-hd44780/tree/master).

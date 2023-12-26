@@ -1,12 +1,14 @@
 #pragma once
 
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 
 #define LCD_CMD_DDR  DDRD
 #define LCD_CMD_PORT PORTD
 
 #define LCD_DATA_DDR  DDRA
 #define LCD_DATA_PORT PORTA
+#define LCD_DATA_PIN  PINA
 
 #define LCD_RS PD2
 #define LCD_RW PD3
@@ -85,4 +87,5 @@ void lcd_create_char(uint8_t location, uint8_t *charmap);
 void lcd_set_cursor(uint8_t col, uint8_t row);
 
 void lcd_puts(char *string);
+void lcd_puts_P(const char *string);
 void lcd_printf(char *format, ...);

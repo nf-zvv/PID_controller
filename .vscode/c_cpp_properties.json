@@ -1,0 +1,25 @@
+{
+	"configurations": [
+		{
+			"name": "pi_controller",
+            "includePath": [
+                "${workspaceRoot}/inc",
+                "c:/avr-gcc/avr/include/"
+            ],
+            "browse": {
+                "path": []
+            },
+            "defines": [
+                "F_CPU 16000000UL",
+                "__AVR_ATmega16__"
+            ],
+            "compilerPath": "c:/avr-gcc/bin/avr-gcc.exe",
+            "compilerArgs": [],
+            "cStandard": "c11",
+            "cppStandard": "gnu++11",
+            "intelliSenseMode": "${default}",
+            "configurationProvider": "ms-vscode.makefile-tools"
+		}
+	],
+	"version": 4
+}

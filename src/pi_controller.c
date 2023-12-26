@@ -29,11 +29,14 @@ int main(void) {
 	lcd_clear();
 	lcd_return_home();
 	
-	lcd_puts(hello);
+	lcd_puts("hello");
+    lcd_set_cursor(0,1);
+    lcd_puts_P(hello);
 	
     //Make a PI controller:
-    pid_coeff.new_ki = FLOAT_TO_Q8(0.1f);
     pid_coeff.new_kp = FLOAT_TO_Q8(1.0f);
+    pid_coeff.new_ki = FLOAT_TO_Q8(0.1f);
+    pid_coeff.new_kd = FLOAT_TO_Q8(1.0f);
 
     //FIRST: initialize your PID controller:
     PidControllerInit(&pi_controller,
