@@ -9,11 +9,13 @@
 #include <simplePID.h>
 #include "lcd.h"
 #include "adc.h"
+#include "uart.h"
 
 static PidController pi_controller;
 static PidNewCoefficients pid_coeff;
 
 const char title[] PROGMEM = "PID controller";
+const unsigned char uart_start[] PROGMEM = "PID controller started\r\n";
 
 // Прерывание таймера Т0
 ISR(TIMER0_COMP_vect)
@@ -62,6 +64,10 @@ int main(void) {
     // Инициализация таймера Т0
     // Срабатывание прерывания таймера каждые 2 мс (500 Гц)
     Timer0_Init();
+
+    UART_Init();
+
+    send_UART_str_P(uart_start);
 	
     //Make a PI controller:
     pid_coeff.new_kp = FLOAT_TO_Q8(1.0f);
