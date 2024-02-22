@@ -28,6 +28,8 @@ DEFINES = \
 # путь к каталогу с GCC
 AVRCCDIR = c:/avr-gcc/bin/
 
+EXTRALIBDIRS = lib
+
 #само название компилятора, мало ли, вдруг оно когда-нибудь поменяется
 CC = avr-gcc
 OBJCOPY = avr-objcopy
@@ -58,11 +60,16 @@ CFLAGS += -Wa,-adhlns=$(BUILD_DIR)/$(@F).lss
 #CFLAGS += -finput-charset=UTF-8 -fexec-charset=cp1251
 #CFLAGS += -Wa,-adhlns=$(BUILD_DIR)/$(TARGET).lss
 
-LDFLAGS = 
+LDFLAGS = -Wl,--gc-sections
+LDFLAGS += -Wl,--print-gc-sections
+LDFLAGS += -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref
+LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
+#LDFLAGS += -lds18b20
+
 #LDFLAGS = -Wl,--gc-sections
 #LDFLAGS += -Wl,--print-gc-sections
 # Флаг `--gc-sections` указывает компоновщику опускать разделы, на которые нет ссылок
-
+#-L$(LIBRARIESDIR) -lds18b20
 
 
 # пути к заголовочным файлам
@@ -99,7 +106,7 @@ $(TARGET).elf: $(OBJ_FILES) $(ASM_FILES)
 	@echo
 	@echo $(MSG_LINKING) $@
 	copy src\simplePID_a.s build\simplePID_a.s
-	$(AVRCCDIR)$(CC) -mmcu=$(MCU) $(LDFLAGS) $(OUT_OBJ) -o $(BUILD_DIR)/$@
+	$(AVRCCDIR)$(CC) -mmcu=$(MCU) $(LDFLAGS) $(OUT_OBJ) -o $(BUILD_DIR)/$@ -lds18b20
 
 $(TARGET).eep:  $(TARGET).elf
 	-$(AVRCCDIR)$(OBJCOPY) $(HEX_EEPROM_FLAGS) -O ihex $(BUILD_DIR)/$< $(BUILD_DIR)/$@ || exit 0
