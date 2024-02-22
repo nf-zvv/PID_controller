@@ -7,6 +7,7 @@ src/pi_controller.c \
 src/simplePID.c \
 src/simplePID_a.s \
 src/lcd.c \
+src/uart.c \
 src/adc.c
 
 
